@@ -1,0 +1,161 @@
+.ui-somenu
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 260px;
+	display: block;
+	border: 0px;
+}
+
+.ui-somenu.ui-somenu-hidden
+{
+	display: none;
+}
+
+.ui-somenu .ui-page
+{
+	z-index: auto;
+	min-height: inherit;
+}
+
+.ui-page.animate,
+.ui-page.animate .ui-header-fixed,
+.ui-page.animate .ui-footer-fixed
+{
+	-webkit-transform: translatez(0);
+    -moz-transform: translatez(0);
+    -ms-transform: translatez(0);
+    -o-transform: translatez(0);
+    transform: translatez(0);
+	
+	-moz-transition: left 200ms ;
+
+    -webkit-transition: left 200ms ;
+
+    -o-transition: left 200ms;
+
+    transition: left 200ms ;
+}
+
+.ui-page.animate .ui-header-fixed,
+.ui-page.animate .ui-footer-fixed
+{
+	left: 0px !important;
+}
+
+.ui-somenu .ui-btn-active .ui-icon
+{
+	margin-top: -8px;
+	display: block;
+}
+
+.ui-somenu .ui-icon.ui-icon-triangle-right
+{
+	display: block;
+}
+
+.ui-somenu li.ui-collapsed
+{
+	display: none;
+}
+
+/* collapsible lists */
+.ui-somenu .ui-collapsibler 
+{
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.ui-somenu .ui-collapsibler .ui-icon
+{
+	display: block;
+	position: absolute;
+	top: 50%;
+}
+
+.ui-somenu .ui-collapsibler .ui-selected-text
+{
+	font-size: 0.9em;
+	font-weight: normal;
+}
+
+.ui-somenu ul.ui-collapsed li
+{
+	display: none;
+}
+
+.ui-somenu ul.ui-collapsed li.ui-collapsibler
+{
+	display: block;
+}
+
+.ui-icon.ui-icon-triangle-right,
+.ui-icon.ui-icon-triangle-down-black,
+.ui-icon.ui-icon-triangle-up-black
+{
+	-moz-border-radius: 0px;
+	-webkit-border-radius: 0px;
+	border-radius: 0px;
+	margin-top: -3px;
+}
+
+.ui-icon.ui-icon-triangle-right
+{
+	width: 0px;
+	height: 0px;
+	border-top: 5px solid transparent;
+	border-bottom: 5px solid transparent;
+	border-left: 5px solid #fff;
+	display: block;
+	background: transparent;
+}
+
+.ui-icon.ui-icon-triangle-down-black
+{
+	width: 0px;
+	height: 0px;
+	border-right: 5px solid transparent;
+	border-top: 5px solid #000;
+	border-left: 5px solid transparent;
+	display: block;
+	background: transparent;
+}
+
+.ui-icon.ui-icon-triangle-up-black
+{
+	width: 0px;
+	height: 0px;
+	border-right: 5px solid transparent;
+	border-bottom: 5px solid #000;
+	border-left: 5px solid transparent;
+	display: block;
+	background: transparent;
+}
+
+.ui-btn-icon-left .ui-btn-inner .ui-icon.ui-icon-triangle-right,
+.ui-btn-icon-right .ui-btn-inner .ui-icon.ui-icon-triangle-right,
+.ui-btn-inner .ui-icon.ui-icon-triangle-right
+{
+	margin-top: -0.4em;
+}
+
+
+.ui-page.ui-somenu-open
+{
+	-webkit-box-shadow: -3px 0px 5px rgba(0, 0, 0, 0.4);
+	box-shadow: -3px 0px 5px rgba(0, 0, 0, 0.4);
+	z-index: 2;
+}
+
+.ui-somenu .ui-content
+{
+	padding-top: 0px;
+}
+
+.ui-somenu ul.ui-listview
+{
+	margin-bottom: 0px;
+	margin-top: 0px;
+}

@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" >
+		<title>SlideoutMenu demo</title>
+		<link rel="stylesheet" href="lib/jquerymobile/jquery.mobile.css" />
+		<link rel="stylesheet"  href="css/jquery.mobile.slideoutmenu.css" />
+		<script src="lib/jquery-1.7.1.js"></script>
+		<script src="js/ClickBuster.js"></script>
+		<script src="js/jquery.mobile.slideoutmenu.js"></script>
+		<script type="text/javascript" src="lib/jquerymobile/jquery.mobile.js"></script>
+	</head>
+	<body>
+		<div data-role="page" id="home">
+			<div data-role="header" data-position="fixed">
+				<a data-role="somenutoggler">Menu</a>
+				<h1>Slideoutmenu demo</h1>
+			</div>
+			<div data-role="content">
+				<p>Click the menu button in the header to toggle the menu</p>
+			</div>
+		</div>
+		
+		<div data-role="page" id="collapsed">
+			<div data-role="header">
+				<a data-role="somenutoggler">Menu</a>
+				<h1>Slideoutmenu demo - Collapsed menu items</h1>
+			</div>
+			<div data-role="content">
+				<p>Click the menu button in the header to toggle the menu</p>
+				
+				<p>Collapsed menu items demo</p>
+				<div data-role="somenu-replace" style="display:none">
+					<div data-role="content">
+						<ul data-role="listview">
+							<li data-role="list-divider">Links</li>
+							<li><a href="#home">Home</a></li>
+							<li><a href="#collapsed">Collapsed Menus</a></li>
+							<li><a href="#collapsible">Collapsible Lists</a></li>
+						</ul>
+						<ul data-role="listview">
+							<li data-role="list-divider">List items</li>
+				 			<li><a>item1</a></li>
+				 			<li><a>item2</a></li>
+				 			<li data-collapsed="true"><a>hidden</a></li>
+				 			<li data-collapsed="true"><a>hidden2</a></li>
+				 			<li data-collapsed="true"><a>hidden3</a></li>
+				 			<li data-collapsed="true"><a>hidden4</a></li>
+				 			<li data-role="collapsibler"><a>more...</a></li>
+				 		</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div data-role="page" id="collapsible">
+			<div data-role="header">
+				<a data-role="somenutoggler">Menu</a>
+				<h1>Slideoutmenu demo - Collapsible lists</h1>
+			</div>
+			<div data-role="content">
+				<p>Click the menu button in the header to toggle the menu</p>
+				
+				<p>Collapsible lists demo</p>
+				<div data-role="somenu-replace" style="display:none">
+					<div data-role="content">
+						<ul data-role="listview">
+							<li data-role="list-divider">Links</li>
+							<li><a href="#home">Home</a></li>
+							<li><a href="#collapsed">Collapsed Menus</a></li>
+							<li><a href="#collapsible">Collapsible Lists</a></li>
+						</ul>
+						<ul data-role="listview" data-collapsible="true" data-show-selected="true" data-icon-collapsed="triangle-down-black" data-icon-expanded="triangle-up-black">
+							<li data-role="list-divider">List items</li>
+				 			<li><a>item1</a></li>
+				 			<li><a>item2</a></li>
+				 			<li data-collapsed="true"><a>hidden</a></li>
+				 			<li data-collapsed="true"><a>hidden2</a></li>
+				 			<li data-collapsed="true"><a>hidden3</a></li>
+				 			<li data-collapsed="true"><a>hidden4</a></li>
+				 			<li data-role="collapsibler"><a>more...</a></li>
+				 		</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div data-role="somenu-default" style="display:none">
+			<div data-role="content">
+				<ul data-role="listview">
+					<li data-role="list-divider">Links</li>
+					<li><a href="#home">Home</a></li>
+					<li><a href="#collapsed">Collapsed Menus</a></li>
+					<li><a href="#collapsible">Collapsible Lists</a></li>
+				</ul>
+				<ul data-role="listview">
+					<li data-role="list-divider">List items</li>
+		 			<li>item 1</li>
+		 			<li>item 2</li>
+		 			<li>item 3</li>
+		 		</ul>
+			</div>
+		</div>
+	</body>
+</html>
