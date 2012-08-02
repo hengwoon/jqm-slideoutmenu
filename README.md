@@ -97,10 +97,8 @@ To replace the menu with new content when user switches or loads a page, simply 
 Options:
 --------
 To configure the SlideoutMenu's options, pass the options in when creating the SlideoutMenu object:
-```new SlideoutMenu({icon: 'arrow-r'})```
+```new SlideoutMenu({enableAnimation: false})```
 
-- **icon**: the default icon for the listview items in the SlideoutMenu. Defaults to 'arrow-r'.
-- **iconshadow**: default iconshadow for the listview items in SlideoutMenu. Defaults to true.
 - **enableAnimation**: If set to false, disable animation when toggling menu. Note that if page has fixed headers or footers, animation will always be disabled
 
 Events:

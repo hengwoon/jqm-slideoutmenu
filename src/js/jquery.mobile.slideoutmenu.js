@@ -36,8 +36,6 @@
  * 		somenuinit: triggers when menu is initialized
  *
  * Options:
- * 		icon: the default button icon to be used for menu links
- * 		iconshadow: icon shadow to be applied to menu links
  * 		enableAnimation: If set to false, disable animation when toggling menu. Note that if page has fixed headers or footers, animation will always be disabled
  *
  * Menu toggler:
@@ -57,44 +55,46 @@
  * 
  */
 
-ClickBuster = {
-	coordinates: [],
-	
-	preventGhostClick: function(e)
-	{
-		ClickBuster.coordinates.push(e.clientX, e.clientY);
-		window.setTimeout(ClickBuster.pop, 1000);
-		e.preventDefault();
-		e.stopPropagation();
-	},
-
-	pop: function() {
-		ClickBuster.coordinates.splice(0,2);
-	},
-
-	onClick: function(event) {
-		if (!ClickBuster.canClick(event.clientX, event.clientY))
+if (typeof(ClickBuster) == 'undefined')
+{	
+	ClickBuster = {
+		coordinates: [],
+		
+		preventGhostClick: function(e)
 		{
-			event.stopPropagation();
-			event.preventDefault();
-		}
-	},
-
-	canClick: function(clickX, clickY) {
-		for (var i = 0; i < ClickBuster.coordinates.length; i += 2) {
-			var x = ClickBuster.coordinates[i];
-			var y = ClickBuster.coordinates[i + 1];
-			if (Math.abs(clickX - x) < 25 && Math.abs(clickY - y) < 25) {
-				return false;
+			ClickBuster.coordinates.push(e.clientX, e.clientY);
+			window.setTimeout(ClickBuster.pop, 1000);
+			e.preventDefault();
+			e.stopPropagation();
+		},
+	
+		pop: function() {
+			ClickBuster.coordinates.splice(0,2);
+		},
+	
+		onClick: function(event) {
+			if (!ClickBuster.canClick(event.clientX, event.clientY))
+			{
+				event.stopPropagation();
+				event.preventDefault();
 			}
+		},
+	
+		canClick: function(clickX, clickY) {
+			for (var i = 0; i < ClickBuster.coordinates.length; i += 2) {
+				var x = ClickBuster.coordinates[i];
+				var y = ClickBuster.coordinates[i + 1];
+				if (Math.abs(clickX - x) < 25 && Math.abs(clickY - y) < 25) {
+					return false;
+				}
+			}
+	
+			return true;
 		}
+	};
 
-		return true;
-	}
-};
-
-document.addEventListener("click", ClickBuster.onClick, true);
-
+	document.addEventListener("click", ClickBuster.onClick, true);
+}
 
 
 var SlideoutMenu = function (options) {
@@ -122,7 +122,7 @@ var SlideoutMenu = function (options) {
 	}
 	
 	// bind events
-	this.menu.delegate("a", "vclick", function (event) {
+	this.menu.delegate("a", "click", function (event) {
 		var liBtn = $(event.target).closest('li.ui-btn');
 		if( !$(event.target).hasClass("ui-disabled") && (!liBtn.length || liBtn.not(".ui-disabled").jqmData("role") != 'collapsibler')) {
 			self.close();
@@ -206,15 +206,13 @@ var SlideoutMenu = function (options) {
 	$(window).on("orientationchange", function() { if (SlideoutMenu.activeMenu.isOpen) SlideoutMenu._resizeHandler(); });
 	
 	this.menu.delegate( "form", "submit", function( event ) {
-		$.mobile.showPageLoadingMsg();
 		this.close();
+		$.mobile.showPageLoadingMsg();
 	});
 };
 
 SlideoutMenu.prototype.options = {
 	hideClass: 'ui-somenu-hidden',
-	icon: 'arrow-r',
-	iconshadow: false,
 	enableAnimation: true
 };
 
@@ -396,19 +394,6 @@ SlideoutMenu.prototype.init = function()
 		$menu = this.menu,
 		o = this.options,
 		self = this;
-	
-	$menu.find("li").each(function(i, row) {
-		
-		if ($(row).jqmData('role') != 'list-divider')
-		{
-			if ($(row).jqmData('icon') == undefined) 
-			{
-				$(row).jqmData('icon', o.icon);
-			}
-			
-			$(row).jqmData('iconshadow', o.iconshadow);
-		}
-	});
 
 	//$menu.trigger('create');
 	var currentDataUrl = $.mobile.path.convertUrlToDataUrl($.mobile.urlHistory.getActive() ? $.mobile.urlHistory.getActive().pageUrl : location.href);
@@ -467,6 +452,6 @@ SlideoutMenu.prototype.init = function()
 			$(":jqmData(role='somenutoggler')", document).somenutoggler();
 		});
 		
-		$(document).one('pageinit', function() { new SlideoutMenu({icon: 'arrow-r'})});
+		$(document).one('pageinit', function() { new SlideoutMenu(); });
 	});
 })(jQuery);
