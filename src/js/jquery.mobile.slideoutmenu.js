@@ -206,7 +206,7 @@ var SlideoutMenu = function (options) {
 	$(window).on("orientationchange", function() { if (SlideoutMenu.activeMenu.isOpen) SlideoutMenu._resizeHandler(); });
 	
 	this.menu.delegate( "form", "submit", function( event ) {
-		this.close();
+		SlideoutMenu.activeMenu.close();
 		$.mobile.showPageLoadingMsg();
 	});
 };
