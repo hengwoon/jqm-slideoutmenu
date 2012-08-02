@@ -129,8 +129,9 @@
 			}
 		});
 		
-		SlideoutMenu.activeMenu.menu.find(".ui-btn." + $.mobile.activeBtnClass).each(function(i, btn) 
+		SlideoutMenu.activeMenu.menu.find(".ui-btn." + $.mobile.activeBtnClass).each(function(i, el) 
 		{
+			var btn = $(el);
 			// move this btn before collapsible toggler if btn is collapsed/hidden
 			if (btn.jqmData('collapsed'))
 			{

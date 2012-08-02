@@ -101,17 +101,17 @@ To configure the SlideoutMenu's options, pass the options in when creating the S
 
 - **icon**: the default icon for the listview items in the SlideoutMenu. Defaults to 'arrow-r'.
 - **iconshadow**: default iconshadow for the listview items in SlideoutMenu. Defaults to true.
-- **enableAnimation**: Enable animation when toggling the menu. Defaults to true. Setting to false will improve performance.
+- **enableAnimation**: If set to false, disable animation when toggling menu. Note that if page has fixed headers or footers, animation will always be disabled
 
 Events:
 -------
 These are some custom events that allow for hooks into menu actions, such as opening or closing menu, and initialization of menu. These events should be bound to the menu instance itself, which can be accessed via SlideoutMenu.activeMenu.
 
 - **somenubeforeopen**: triggers before menu is opened
-- **somenuonopen**: triggers when menu is opened
+- **somenuopen**: triggers when menu is opened
 - **somenubeforeclose**: triggers before menu is closed
-- **somenuonclose**: triggers when menu is closed
-- **somenuoninit**: triggers when menu is initialized
+- **somenuclose**: triggers when menu is closed
+- **somenuinit**: triggers when menu is initialized
 
 Methods:
 --------
@@ -119,3 +119,35 @@ Methods:
 - close: closes the menu ```SlideoutMenu.activeMenu.close()```
 - toggle: toggles the menu ```SlideoutMenu.activeMenu.toggle()```
 - update: updates the menu with new content ```SlideoutMenu.activeMenu.update($('<div data-role="content"><ul data-role="listview"><li>new menu</li></ul></div>'))```
+
+
+Additional plugins:
+===================
+Collapsible lists - jquery.mobile.slideoutmeu.collapsiblelist.js
+----------------------------------------------------------------
+
+To make a listview in the slideout menu collapsible, add data-collapsible="true" to the listview ul element. There needs to be a list divider that will act as the list toggler / header:
+```
+<ul data-role="listview" data-collapsible="true">
+	<li data-role="list-divider">Links</li>
+	<li>item 1</li>
+	<li>item 2</li>
+</ul>
+```
+
+Configurable options, via data-attributes:
+- **data-icon-collapsed**: 	icon to show when list is collapsed
+- **data-icon-expanded**: 	icon to show when list is expanded
+- **data-show-selected**:	Defaults to false. If set to true, the selected/active buttons' text will be added to the listheader. For example if item 1 is selected, the list header will show 'Links: item 1'
+
+
+**Collapsed menu items with toggler**:
+In addition to collapsible lists, to allow for individual list items to be collapsed, and toggled via a 'more..' link, create a list item link with data-role="collapsibler". <br />
+To hide list items by default, add class 'ui-collapsed' to the list items that will be hidden by default and toggled via the collapsibler link.
+
+```<ul data-role="listview">
+	<li>shown item 1</li>
+	<li>shown item 2</li>
+	<li data-role="collapsibler"><a>more....</a></li>
+	<li class="ui-collapsed">this is hidden and will be shown when the more link is clicked</li>
+</ul>```

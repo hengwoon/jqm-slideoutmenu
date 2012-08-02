@@ -6,9 +6,10 @@
 		<title>SlideoutMenu demo</title>
 		<link rel="stylesheet" href="lib/jquerymobile/jquery.mobile.css" />
 		<link rel="stylesheet"  href="css/jquery.mobile.slideoutmenu.css" />
+		<link rel="stylesheet"  href="css/jquery.mobile.slideoutmenu.collapsiblelist.css" />
 		<script src="lib/jquery-1.7.1.js"></script>
-		<script src="js/ClickBuster.js"></script>
 		<script src="js/jquery.mobile.slideoutmenu.js"></script>
+		<script src="js/jquery.mobile.slideoutmenu.collapsiblelist.js"></script>
 		<script type="text/javascript" src="lib/jquerymobile/jquery.mobile.js"></script>
 	</head>
 	<body>
@@ -31,7 +32,9 @@
 				<p>Click the menu button in the header to toggle the menu</p>
 				
 				<p>Collapsed menu items demo</p>
-				<div data-role="somenu-replace" style="display:none">
+				
+				
+				<div data-role="somenu-replace" class="ui-hidden">
 					<div data-role="content">
 						<ul data-role="listview">
 							<li data-role="list-divider">Links</li>
@@ -63,7 +66,7 @@
 				<p>Click the menu button in the header to toggle the menu</p>
 				
 				<p>Collapsible lists demo</p>
-				<div data-role="somenu-replace" style="display:none">
+				<div data-role="somenu-replace" class="ui-hidden">
 					<div data-role="content">
 						<ul data-role="listview">
 							<li data-role="list-divider">Links</li>
@@ -86,7 +89,7 @@
 			</div>
 		</div>
 		
-		<div data-role="somenu-default" style="display:none">
+		<div data-role="somenu-default" class="ui-hidden">
 			<div data-role="content">
 				<ul data-role="listview">
 					<li data-role="list-divider">Links</li>

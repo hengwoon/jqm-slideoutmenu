@@ -1,7 +1,7 @@
 /**
  * jquerymobile fixed left slideout menu
  * 
- * @author Heng Woon Ong
+ * @author Heng Woon Ong <https://github.com/hengwoon>
  * @copyright Oodle Inc. 2012
  * @version 0.1
  * 
@@ -11,7 +11,7 @@
  * slideoutmenu requires ClickBuster.js, which is used to prevent ghost clicks on mobile devices
  * 
  * To create a default menu, include the following in the dom, outside any jquerymobile page element:
- * 		<div data-role="somenu-default">
+ * 		<div data-role="somenu-default" class="ui-hidden">
  * 				<div data-role="content">
  * 					<ul data-role="listview">
  * 						<li> menu item 1 </li>
@@ -21,7 +21,7 @@
  *		</div>
  *
  * To replace the menu whenever the user changes page, include the following in the target jquerymobile page's content div:
- * 		<div data-role="somenu-replace" style="display:none;">
+ * 		<div data-role="somenu-replace"  class="ui-hidden">
  * 			<div data-role="content">
  * 				<ul data-role="listview">
  * 					<li> new menu item 1 </li>
@@ -30,35 +30,72 @@
  *
  * Events:
  * 		somenubeforeopen: triggers before menu is opened
- * 		somenuonopen: triggers when menu is opened
+ * 		somenuopen: triggers when menu is opened
  * 		somenubeforeclose: triggers before menu is closed
- * 		somenuonclose: triggers when menu is closed
- * 		somenuoninit: triggers when menu is initialized
+ * 		somenuclose: triggers when menu is closed
+ * 		somenuinit: triggers when menu is initialized
  *
  * Options:
  * 		icon: the default button icon to be used for menu links
  * 		iconshadow: icon shadow to be applied to menu links
+ * 		enableAnimation: If set to false, disable animation when toggling menu. Note that if page has fixed headers or footers, animation will always be disabled
  *
  * Menu toggler:
  * Add attribute 'data-role="somenutoggler"' to the link that toggles menu
- *
- * Collapsed menu items:
- * 		In slideout menu, if any menu links in a listview are to be hidden, add 'data-collapsed="true"' to the <li> element.
- * 		Those menu items will be hidden by default, and will be shown when a 'more' link is clicked.
- * 		The 'more' link should be contained in an '<li>' element with data-role="collapsibler". Clicking on the more link will show all sibling <li>s in the containing listview.
- * 		
- * 		<ul data-role="listview">
- * 			<li>item 1</li>
- * 			<li>item 2</li>
- * 			<li data-collapsed="true">hidden</li>
- * 			<li data-role="collapsibler">more...</li>
- * 		</ul>
  * 
  * Selected menu items:
  * 		If a menu item is to be selected by default, use data-selected="true" and add class="ui-state-persist"
  * 		data-selected=true will automatically add the active button class to the list item, and ui-state-persist determines whether the active state persists when navigating other links.
  * 
  */
+
+
+
+/**
+ * bust additional click events that mobile browsers trigger. 
+ * based on https://developers.google.com/mobile/articles/fast_buttons
+ * 
+ */
+
+ClickBuster = {
+	coordinates: [],
+	
+	preventGhostClick: function(e)
+	{
+		ClickBuster.coordinates.push(e.clientX, e.clientY);
+		window.setTimeout(ClickBuster.pop, 1000);
+		e.preventDefault();
+		e.stopPropagation();
+	},
+
+	pop: function() {
+		ClickBuster.coordinates.splice(0,2);
+	},
+
+	onClick: function(event) {
+		if (!ClickBuster.canClick(event.clientX, event.clientY))
+		{
+			event.stopPropagation();
+			event.preventDefault();
+		}
+	},
+
+	canClick: function(clickX, clickY) {
+		for (var i = 0; i < ClickBuster.coordinates.length; i += 2) {
+			var x = ClickBuster.coordinates[i];
+			var y = ClickBuster.coordinates[i + 1];
+			if (Math.abs(clickX - x) < 25 && Math.abs(clickY - y) < 25) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+};
+
+document.addEventListener("click", ClickBuster.onClick, true);
+
+
 
 var SlideoutMenu = function (options) {
 	if (!(this instanceof SlideoutMenu)) return new SlideoutMenu(options);
@@ -203,56 +240,12 @@ SlideoutMenu._resizeHandler = function(e)
 	mainPage.height(menuHeight);
 };
 
-SlideoutMenu.refreshCollapsibleList = function(list)
-{
-	var collapsedIcon = 'ui-icon-' + list.jqmData('icon-collapsed');
-	var expandedIcon = 'ui-icon-' + list.jqmData('icon-expanded');
-	var listHeader = list.find(":jqmData(role='list-divider')").addClass('ui-collapsibler ui-btn-icon-right');
-	var iconEl = listHeader.find('.ui-icon');
-	
-	if (list.jqmData('collapsed'))
-	{
-		listHeader.find('.ui-icon').addClass(collapsedIcon).removeClass(expandedIcon);
-		list.addClass('ui-collapsed');
-	}
-	else
-	{
-		list.removeClass('ui-collapsed');
-		listHeader.find('.ui-icon').removeClass(collapsedIcon).addClass(expandedIcon);
-	}
-	
-	if (list.jqmData('show-selected'))
-	{
-		var selectedTextEl = listHeader.find('.ui-selected-text');
-		var listType = listHeader.jqmData('type');
-		var selected = list.find("." + $.mobile.activeBtnClass + ' a');
-		var selectedText = list.jqmData('selected-text');			
-		
-		if (!selected.length && !selectedText)
-		{
-			selectedTextEl.html('');
-		}
-		else
-		{
-			if (selected.length)
-			{
-				selectedText = '';
-				selected.each(function(){
-					selectedText += ' ' + $(this).text() + ',';
-				});
-			}				
-			selectedText = ': ' + selectedText;
-			
-			selectedTextEl.text(selectedText.replace(/,$/,''));
-		}
-	}
-};
-
 SlideoutMenu.mainPage = null; // keep track of current active page, so we don't do unnecessary menu updates when transitioning to same page.
 SlideoutMenu.toPageOnClose = null; // page to change to when menu is closed
 
 SlideoutMenu.prototype.isOpen = false;
 SlideoutMenu.prototype._initialMenuContents = null; // the initial menu contents
+SlideoutMenu.prototype.menuBtns = [];
 
 SlideoutMenu.prototype.open = function()
 {
@@ -282,7 +275,7 @@ SlideoutMenu.prototype.open = function()
 	var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
 	var pagePadding = 0;
 
-	if (this.options.enableAnimation)
+	if (this.options.enableAnimation && !fixedH.length && !fixedF.length)
 	{
 		mainPage.addClass('animate');
 	}
@@ -304,7 +297,7 @@ SlideoutMenu.prototype.open = function()
 	
 	SlideoutMenu._resizeHandler();
 	
-	var menuOnOpen = new $.Event( "somenuonopen" );
+	var menuOnOpen = new $.Event( "somenuopen" );
 	this.menu.trigger(menuOnOpen);
 	
 	$.mobile.activePage.one('vclick', function(e) {
@@ -338,7 +331,10 @@ SlideoutMenu.prototype.close = function()
 	
 	if (!mainPage) return;
 	
-	if (this.options.enableAnimation)
+	var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
+	var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
+	
+	if (this.options.enableAnimation && !fixedH.length && !fixedF.length)
 	{
 		mainPage.addClass('animate');
 		setTimeout(function() { $el.addClass(hideClass); mainPage.removeClass('ui-somenu-open'); }, 200);
@@ -347,9 +343,6 @@ SlideoutMenu.prototype.close = function()
 	{
 		$el.addClass(hideClass); mainPage.removeClass('ui-somenu-open');
 	}
-	
-	var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
-	var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
 	
 	mainPage.css({left:0, 'overflow-y': 'auto'})
 	
@@ -369,7 +362,7 @@ SlideoutMenu.prototype.close = function()
 	
 	SlideoutMenu._resizeHandler();
 	
-	var menuOnClose = new $.Event( "somenuonclose" );
+	var menuOnClose = new $.Event( "somenuclose" );
 	this.menu.trigger(menuOnClose);
 };
 
@@ -418,56 +411,17 @@ SlideoutMenu.prototype.init = function()
 	});
 
 	//$menu.trigger('create');
+	var currentDataUrl = $.mobile.path.convertUrlToDataUrl($.mobile.urlHistory.getActive() ? $.mobile.urlHistory.getActive().pageUrl : location.href);
 	
-	// handle collapsible lists
-	$menu.find("ul:jqmData(collapsible='true')").each(function() {
-		if ($(this).hasClass('ui-ul-collapsible')) return;
-		
-		$(this).addClass(".ui-ul-collapsible");
-		var listHeader = $(this).find(":jqmData(role='list-divider')").addClass('ui-collapsibler');
-		listHeader.append('<span class="ui-selected-text"></span><span class="ui-icon"> </span>');
-
-		listHeader.on('vclick', function(e){
-			e.preventDefault();
-			e.stopPropagation();
-			
-			ClickBuster.preventGhostClick(e);
-			var list = $(this).closest(":jqmData(role='listview')");
-			var collapsed = list.jqmData('collapsed');
-			
-			list.jqmData('collapsed', !collapsed);
-			
-			SlideoutMenu.refreshCollapsibleList(list);
-			
-			SlideoutMenu._resizeHandler();
-		});
-	});
+	this.menuBtns = $menu.find("li.ui-btn").not(".ui-li-divider");
 	
-	var menuBtns = $menu.find("li.ui-btn").not(".ui-li-divider");
-	
-	menuBtns.each(function() {
+	this.menuBtns.each(function() {
 		var menuBtn = $(this);
 
-		// hide collapsed items
-		if (menuBtn.jqmData('collapsed')) menuBtn.addClass('ui-collapsed');
-		
 		// handle selected items
 		if (menuBtn.jqmData('selected')) menuBtn.addClass( $.mobile.activeBtnClass );
 		else if (!menuBtn.hasClass('ui-state-persist')) menuBtn.removeClass( $.mobile.activeBtnClass );
-		
-		// handle collapsibler toggler
-		if (menuBtn.jqmData('role') == 'collapsibler')
-		{
-			menuBtn.on('vclick', function(e){
-				ClickBuster.preventGhostClick(e);
-				$(this).siblings(':jqmData(collapsed=true)').jqmData('collapsed', false).removeClass('ui-collapsed');
-				$(this).remove();
-				SlideoutMenu._resizeHandler();
-			});
-		}
 	});
-	
-	var currentDataUrl = $.mobile.path.convertUrlToDataUrl($.mobile.urlHistory.getActive() ? $.mobile.urlHistory.getActive().pageUrl : location.href);
 	
 	// figure out what current page is, and set proper active btn
 	$menu.find(".ui-btn a").each(function(i, link) 
@@ -477,29 +431,11 @@ SlideoutMenu.prototype.init = function()
 		{
 			var btn = $(link).closest('.ui-btn');
 			btn.addClass($.mobile.activeBtnClass);
-			
-			// move this btn before collapsible toggler if btn is collapsed/hidden
-			if (btn.jqmData('collapsed'))
-			{
-				btn.removeClass('ui-collapsed');
-				btn.jqmData('collapsed', false);
-				var toggler = btn.siblings(":jqmData(role='collapsibler')");
-				if (toggler.length)
-				{
-					btn.insertBefore(toggler);
-				}
-			}
-			
 			return false;
 		}
 	});
 	
-	$("ul:jqmData(collapsible='true')", $menu).each(function()
-	{		
-		SlideoutMenu.refreshCollapsibleList($(this));
-	});
-	
-	var menuEvent = new $.Event( "somenuoninit" );
+	var menuEvent = new $.Event( "somenuinit" );
 	
 	this.menu.trigger(menuEvent);
 	
@@ -533,5 +469,4 @@ SlideoutMenu.prototype.init = function()
 		
 		$(document).one('pageinit', function() { new SlideoutMenu({icon: 'arrow-r'})});
 	});
-	//resizePoll();
 })(jQuery);
