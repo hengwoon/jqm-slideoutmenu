@@ -78,9 +78,11 @@
 		}
 	};
 	
-	$(document).on('somenuinit', function(event) {
+	$(document).on('somenucreate', function(event) {
+		var somenu = SlideoutMenu(),
+			menu = $(event.target);
 		
-		SlideoutMenu.activeMenu.menu.find("ul:jqmData(collapsible='true')").each(function() {
+		menu.find("ul:jqmData(collapsible='true')").each(function() {
 			if ($(this).hasClass('ui-ul-collapsible')) return;
 			
 			$(this).addClass(".ui-ul-collapsible");
@@ -99,11 +101,11 @@
 				
 				_refreshCollapsibleList(list);
 				
-				SlideoutMenu._resizeHandler();
+				somenu._resizeHandler();
 			});
 		});
 		
-		$("ul:jqmData(collapsible='true')", SlideoutMenu.activeMenu.menu).each(function()
+		$("ul:jqmData(collapsible='true')", menu).each(function()
 		{		
 			_refreshCollapsibleList($(this));
 		});
@@ -111,7 +113,7 @@
 		
 		
 		// collapsed menu items with 'more...' toggler
-		SlideoutMenu.activeMenu.menuBtns.each(function() {
+		menu.find("li.ui-btn").not(".ui-li-divider").each(function() {
 			var menuBtn = $(this);
 
 			// hide collapsed items
@@ -124,12 +126,12 @@
 					ClickBuster.preventGhostClick(e);
 					$(this).siblings(':jqmData(collapsed=true)').jqmData('collapsed', false).removeClass('ui-collapsed');
 					$(this).remove();
-					SlideoutMenu._resizeHandler();
+					somenu._resizeHandler();
 				});
 			}
 		});
 		
-		SlideoutMenu.activeMenu.menu.find(".ui-btn." + $.mobile.activeBtnClass).each(function(i, el) 
+		menu.find(".ui-btn." + $.mobile.activeBtnClass).each(function(i, el) 
 		{
 			var btn = $(el);
 			// move this btn before collapsible toggler if btn is collapsed/hidden

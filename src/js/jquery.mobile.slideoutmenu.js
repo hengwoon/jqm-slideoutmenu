@@ -3,15 +3,20 @@
  * 
  * @author Heng Woon Ong <https://github.com/hengwoon>
  * @copyright Oodle Inc. 2012
- * @version 0.1
+ * @version 0.2
  * 
  * This creates a left slideout menu consisting of listviews that is hidden initially and can be toggled open / close. 
  * The menu contents can also be updated depending on the page the user is on.
  * 
  * slideoutmenu requires ClickBuster.js, which is used to prevent ghost clicks on mobile devices
  * 
+ * Menu contents have a structure similar to the jqueryMobile page structure, except that the page data-role attribute is set to 'somenu' instead of 'page'
+ * 
  * To create a default menu, include the following in the dom, outside any jquerymobile page element:
  * 		<div data-role="somenu-default" class="ui-hidden">
+ * 				<div data-role="header">
+ * 					<h1>Menu #1 </h1>
+ * 				</div>
  * 				<div data-role="content">
  * 					<ul data-role="listview">
  * 						<li> menu item 1 </li>
@@ -21,19 +26,21 @@
  *		</div>
  *
  * To replace the menu whenever the user changes page, include the following in the target jquerymobile page's content div:
- * 		<div data-role="somenu-replace"  class="ui-hidden">
+ * 		<div data-role="somenu"  class="ui-hidden">
  * 			<div data-role="content">
  * 				<ul data-role="listview">
  * 					<li> new menu item 1 </li>
  * 					<li> new menu item 2 </li>
- * 				</ul> 				
+ * 				</ul>
+ * 			</div>
+ * 		</div>
  *
  * Events:
  * 		somenubeforeopen: triggers before menu is opened
  * 		somenuopen: triggers when menu is opened
  * 		somenubeforeclose: triggers before menu is closed
  * 		somenuclose: triggers when menu is closed
- * 		somenuinit: triggers when menu is initialized
+ * 		somenucreate: triggers when menu is created for a page
  *
  * Options:
  * 		enableAnimation: If set to false, disable animation when toggling menu. Note that if page has fixed headers or footers, animation will always be disabled
@@ -94,26 +101,26 @@ if (typeof(ClickBuster) == 'undefined')
 	};
 
 	document.addEventListener("click", ClickBuster.onClick, true);
-}
+};
 
-
-var SlideoutMenu = function (options) {
+var SlideoutMenu = function(options)
+{
+	var _instance;
+	
 	if (!(this instanceof SlideoutMenu)) return new SlideoutMenu(options);
 	
-	if (typeof(options) == 'object')
-	{
-		this.options = $.extend(this.options, options);
-	}
+	SlideoutMenu = function() {
+		return _instance;
+	};
 	
+	var self =_instance = this;
+	
+	this.options = $.extend(this.options, options);
 	this.container = $('<div id="somenu" class="ui-somenu ui-page-active"></div>');
-	this.menu = $('<div data-role="page"><div data-role="content"></div></div>');
-	this.menu.appendTo(this.container);
-	this.menu.page();
+	
 	this.container.appendTo($('.ui-mobile-viewport'));
 	this.container.addClass(this.options.hideClass);
 	this.isOpen = false;
-	
-	var self = SlideoutMenu.activeMenu = this;
 	
 	if (location.hash == '#menu')
 	{
@@ -122,11 +129,11 @@ var SlideoutMenu = function (options) {
 	}
 	
 	// bind events
-	this.menu.delegate("a", "click", function (event) {
+	this.container.delegate("a", "click", function (event) {
 		var liBtn = $(event.target).closest('li.ui-btn');
 		if( !$(event.target).hasClass("ui-disabled") && (!liBtn.length || liBtn.not(".ui-disabled").jqmData("role") != 'collapsibler')) {
 			self.close();
-			self.menu.find("." + $.mobile.activeBtnClass).not(".ui-state-persist").not(":jqmData(selected=true)").removeClass( $.mobile.activeBtnClass );
+			self.activeMenu.find("." + $.mobile.activeBtnClass).not(".ui-state-persist").not(":jqmData(selected=true)").removeClass( $.mobile.activeBtnClass );
 			$( this ).closest('li.ui-btn').addClass( $.mobile.activeBtnClass );
 			return true;
 		}
@@ -135,27 +142,19 @@ var SlideoutMenu = function (options) {
 	$(document).on("pagechange", function(e, data) {
 		// in some cases, we want to modify the slideout menu, or simply replace it
 		// see if there's a menu to replace with:
-		if (!SlideoutMenu.mainPage || SlideoutMenu.mainPage[0] !== data.toPage[0])
+		if (!self.mainPage || self.mainPage[0] !== data.toPage[0])
 		{
-			var replacementMenu = $(":jqmData(role='somenu-replace')", data.toPage).first();
+			self.mainPage = $.mobile.activePage;
 			
-			SlideoutMenu.mainPage = $.mobile.activePage;
-		
-			if (replacementMenu.length)
+			// check to see if there's already a menu created for this page
+			if (!self.getMenuForPage(data.toPage))
 			{
-				// clone the menu. This is so we can handle back/forward buttons or when switching between pages cached in the dom / multipage template
-				var menuClone = replacementMenu.find(":jqmData(role='content')").clone(true);
+				// no menu yet for this page. Check page to see if we need to create one.
+				var menuForPage = $(":jqmData(role='somenu')", data.toPage).first();
 				
-				// now replace the current menu.
-				SlideoutMenu.activeMenu.update(menuClone);
-			}
-			else if (!SlideoutMenu.activeMenu._initialMenuContents) // no replacement menu and menu not initialized. Check to see if there's default menu
-			{
-				// default menu ?
-				var defaultMenu = $(":jqmData(role='somenu-default')").page().first();
-				if (defaultMenu.length)
+				if (menuForPage.length)
 				{
-					SlideoutMenu.activeMenu.update(defaultMenu.find(":jqmData(role='content')"));
+					self.createMenuForPage(menuForPage, data.toPage);
 				}
 			}
 		}
@@ -167,266 +166,309 @@ var SlideoutMenu = function (options) {
 			
 			if (location.hash !== '#menu') return false; //sanity check
 			
-			SlideoutMenu.activeMenu.open();
+			self.open();
 		}
 		else
 		{
-			if (location.hash == '#menu' && !SlideoutMenu.toPageOnClose) {
+			if (location.hash == '#menu' && !self.toPageOnClose) {
 				e.preventDefault();
 				
-				SlideoutMenu.toPageOnClose = {
+				self.toPageOnClose = {
 					toPage: data.toPage,
 					options: data.options
 				};
 				
-				SlideoutMenu.toPageOnClose.options.fromPage = null;
+				self.toPageOnClose.options.fromPage = null;
 
-				SlideoutMenu.activeMenu.close();
+				self.close();
 				
 				//setTimeout(function() { history.back(); }, 0);
 				return false;
 			}
 			
-			if (SlideoutMenu.toPageOnClose && typeof(SlideoutMenu.toPageOnClose) === 'object')
+			if (self.toPageOnClose && typeof(self.toPageOnClose) === 'object')
 			{
 				e.preventDefault();
-				var toPage = SlideoutMenu.toPageOnClose.toPage,
-					toPageOptions = SlideoutMenu.toPageOnClose.options;
+				var toPage = self.toPageOnClose.toPage,
+					toPageOptions = self.toPageOnClose.options;
 				
-				SlideoutMenu.toPageOnClose = false;
+				self.toPageOnClose = false;
 
 				$.mobile.showPageLoadingMsg();
 				setTimeout(function() { $.mobile.changePage(toPage, toPageOptions); $.mobile.hidePageLoadingMsg(); }, 200);
 			}
 			
-			SlideoutMenu.activeMenu.close();
+			self.close();
 		}
 	});
 
-	$(window).on("orientationchange", function() { if (SlideoutMenu.activeMenu.isOpen) SlideoutMenu._resizeHandler(); });
+	$(window).on("orientationchange", function() { if (self.isOpen) self._resizeHandler(); });
 	
-	this.menu.delegate( "form", "submit", function( event ) {
-		SlideoutMenu.activeMenu.close();
+	self.container.delegate( "form", "submit", function( event ) {
+		self.close();
 		$.mobile.showPageLoadingMsg();
 	});
-};
-
-SlideoutMenu.prototype.options = {
-	hideClass: 'ui-somenu-hidden',
-	enableAnimation: true
-};
-
-SlideoutMenu._resizeHandler = function(e)
-{
-	var menu = SlideoutMenu.activeMenu;
 	
-	if (!menu) return; // not yet init
 	
-	var mainPage = $.mobile.activePage;
+	// default menu?
+	var defaultMenu = $(":jqmData(role='somenu-default')");
 	
-	if (!mainPage) return;
-	
-	// sync heights
-	var menuHeight = menu.menu.height();
-	
-	if (!menuHeight) 
+	if (defaultMenu.length)
 	{
-		mainPage.height('auto');
-		return;
-	}
-
-	mainPage.height(menuHeight);
-};
-
-SlideoutMenu.mainPage = null; // keep track of current active page, so we don't do unnecessary menu updates when transitioning to same page.
-SlideoutMenu.toPageOnClose = null; // page to change to when menu is closed
-
-SlideoutMenu.prototype.isOpen = false;
-SlideoutMenu.prototype._initialMenuContents = null; // the initial menu contents
-SlideoutMenu.prototype.menuBtns = [];
-
-SlideoutMenu.prototype.open = function()
-{
-	var hideClass = this.options.hideClass,
-		$el = this.container,
-		$menu = this.menu,
-		self = this;
-	
-	if (this.isOpen) return;
-	
-	var menuBeforeOpen = new $.Event( "somenubeforeopen" );
-	this.menu.trigger(menuBeforeOpen);	
-	
-	$.mobile.silentScroll(0);
-	
-	$el.removeClass(hideClass);
-	
-	$menu.css('display', 'block');
-	
-	this.isOpen = true;
-	
-	var mainPage = $.mobile.activePage;
-	
-	if (!mainPage) return;
-	
-	var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
-	var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
-	var pagePadding = 0;
-
-	if (this.options.enableAnimation && !fixedH.length && !fixedF.length)
-	{
-		mainPage.addClass('animate');
-	}
-	
-	mainPage.css({left: this.container.width(), 'overflow-y':'hidden'}).addClass('ui-somenu-open');
-	if (fixedH.length)
-	{
-		fixedH.css({'position':'fixed', 'left': this.container.width(), 'width': '100%'});
-		pagePadding += parseInt(mainPage.css('padding-top'));
-	}
-	
-	if (fixedF.length)
-	{
-		fixedF.css({'position':'fixed', 'left': this.container.width(), 'width': '100%'});
-		pagePadding += parseInt(mainPage.css('padding-bottom'));
-	}
-	
-	this.menu.css('padding-bottom', pagePadding + 'px');
-	
-	SlideoutMenu._resizeHandler();
-	
-	var menuOnOpen = new $.Event( "somenuopen" );
-	this.menu.trigger(menuOnOpen);
-	
-	$.mobile.activePage.one('vclick', function(e) {
-		e.preventDefault();
-		e.stopPropagation();
-		//history.back();
-		SlideoutMenu.activeMenu.close();
-		ClickBuster.preventGhostClick(e);
-	});
-};
-
-SlideoutMenu.prototype.close = function()
-{
-	var hideClass = this.options.hideClass,
-		$el = this.container,
-		$menu = this.menu;
-	
-	if (!this.isOpen) return;
-	
-	if (location.hash == '#menu') {
-		history.back();
-		return;
-	}
-	
-	var menuBeforeClose = new $.Event( "somenubeforeclose" );
-	this.menu.trigger(menuBeforeClose);
-
-	this.isOpen = false;
-	
-	var mainPage = $.mobile.activePage;
-	
-	if (!mainPage) return;
-	
-	var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
-	var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
-	
-	if (this.options.enableAnimation && !fixedH.length && !fixedF.length)
-	{
-		mainPage.addClass('animate');
-		setTimeout(function() { $el.addClass(hideClass); mainPage.removeClass('ui-somenu-open'); }, 200);
-	}
-	else
-	{
-		$el.addClass(hideClass); mainPage.removeClass('ui-somenu-open');
-	}
-	
-	mainPage.css({left:0, 'overflow-y': 'auto'})
-	
-	if (fixedH.length)
-	{
-		fixedH.css('left', 0)[0].style.position = '';
-		fixedH.css('left', 0)[0].style.width = '';
-	}
-	
-	if (fixedF.length)
-	{
-		fixedF.css('left', 0)[0].style.position = '';
-		fixedF.css('left', 0)[0].style.width = '';
-	}
-	
-	this.menu.css('padding-bottom', '0px');
-	
-	SlideoutMenu._resizeHandler();
-	
-	var menuOnClose = new $.Event( "somenuclose" );
-	this.menu.trigger(menuOnClose);
-};
-
-SlideoutMenu.prototype.toggle = function()
-{
-	if (this.isOpen || location.hash == '#menu') {
-		this.close();
-		//setTimeout(function() { history.back(); }, 0);
-	}
-	else
-	{
-		location.hash = '#menu';
+		this.createMenuForPage(defaultMenu);
 	}
 };
 
-SlideoutMenu.prototype.update = function(newMenuContent)
-{	
-	if (!this._initialMenuContents)
+SlideoutMenu.prototype = {
+	_id: 0,
+	isOpen: false,
+	options: {
+		hideClass: 'ui-somenu-hidden',
+		enableAnimation: true
+	},
+	
+
+	toPageOnClose: null,
+	container: null,
+	menus: [],
+	activeMenu: null,
+	mainPage: null,
+	
+	
+	getMenuForPage: function(page)
 	{
-		this._initialMenuContents = this.menu.children(":jqmData(role='content')").clone(true);
-	}
+		var menuIDForPage = page.data('slideoutmenu.id');
+		
+		if (menuIDForPage && this.menus[menuIDForPage])
+			return this.menus[menuIDForPage];
+		
+		return null;
+	},
 	
-	this.menu.children(":jqmData(role='content')").replaceWith(newMenuContent);
-	
-	this.init();
-};
-
-SlideoutMenu.prototype.init = function()
-{	
-	var $el = this.container,
-		$menu = this.menu,
-		o = this.options,
-		self = this;
-
-	//$menu.trigger('create');
-	var currentDataUrl = $.mobile.path.convertUrlToDataUrl($.mobile.urlHistory.getActive() ? $.mobile.urlHistory.getActive().pageUrl : location.href);
-	
-	this.menuBtns = $menu.find("li.ui-btn").not(".ui-li-divider");
-	
-	this.menuBtns.each(function() {
-		var menuBtn = $(this);
-
-		// handle selected items
-		if (menuBtn.jqmData('selected')) menuBtn.addClass( $.mobile.activeBtnClass );
-		else if (!menuBtn.hasClass('ui-state-persist')) menuBtn.removeClass( $.mobile.activeBtnClass );
-	});
-	
-	// figure out what current page is, and set proper active btn
-	$menu.find(".ui-btn a").each(function(i, link) 
+	createMenuForPage: function(menu, page)
 	{
-		var linkDataUrl = $.mobile.path.convertUrlToDataUrl($(link).attr('href'));
-		if (currentDataUrl == linkDataUrl || linkDataUrl == $.mobile.activePage.jqmData('url'))
+		var newMenuID = 'slideoutmenu_' + (++this._id),
+		newMenu = $('<div id="' + newMenuID + '" data-role="page"></div>').append(menu.children()).css('display', 'none');
+	
+		if (page)
 		{
-			var btn = $(link).closest('.ui-btn');
-			btn.addClass($.mobile.activeBtnClass);
-			return false;
+			page.data('slideoutmenu.id', newMenuID);
 		}
-	});
+		
+		newMenu.appendTo(this.container);
+		newMenu.page().trigger('create');
+		this.menus[newMenuID] = newMenu;
+		menu.remove();
+		
+		if (!this.activeMenu)
+		{
+			this.activeMenu = newMenu;
+		}
+		
+		var menuEvent = new $.Event( "somenucreate" );
+		
+		newMenu.trigger(menuEvent);
+	},
 	
-	var menuEvent = new $.Event( "somenuinit" );
-	
-	this.menu.trigger(menuEvent);
-	
-	SlideoutMenu._resizeHandler();
-};
+	refresh: function()
+	{
+		//initialize new menu
+		var $container = this.container,
+			$menu = this.activeMenu,
+			o = this.options,
+			self = this;
 
+		var currentDataUrl = $.mobile.path.convertUrlToDataUrl($.mobile.urlHistory.getActive() ? $.mobile.urlHistory.getActive().pageUrl : location.href);
+		
+		var menuBtns = $menu.find("li.ui-btn").not(".ui-li-divider");
+		
+		menuBtns.each(function() {
+			var menuBtn = $(this);
+	
+			// handle selected items
+			if (menuBtn.jqmData('selected')) menuBtn.addClass( $.mobile.activeBtnClass );
+			else if (!menuBtn.hasClass('ui-state-persist')) menuBtn.removeClass( $.mobile.activeBtnClass );
+		});
+		
+		// figure out what current page is, and set proper active btn
+		$menu.find(".ui-btn a").each(function(i, link) 
+		{
+			var linkDataUrl = $.mobile.path.convertUrlToDataUrl($(link).attr('href'));
+			if (currentDataUrl == linkDataUrl || linkDataUrl == $.mobile.activePage.jqmData('url'))
+			{
+				var btn = $(link).closest('.ui-btn');
+				btn.addClass($.mobile.activeBtnClass);
+				return false;
+			}
+		});
+	},
+	
+	_resizeHandler: function(e)
+	{
+		var menu = this.activeMenu;
+		
+		if (!menu) return; // not yet init
+		
+		var mainPage = $.mobile.activePage;
+		
+		if (!mainPage) return;
+		
+		// sync heights
+		var menuHeight = menu.height();
+		
+		if (!menuHeight) 
+		{
+			mainPage.height('auto');
+			return;
+		}
+
+		mainPage.height(menuHeight);
+	},
+	
+	open: function()
+	{
+		var hideClass = this.options.hideClass,
+			$container = this.container,
+			self = this;
+	
+		if (this.isOpen) return;
+	
+		// is current menu ok for active page?
+		var activePageMenuID = $.mobile.activePage.data('slideoutmenu.id'),
+			currentMenuID = this.activeMenu.attr('id');
+		
+		if (activePageMenuID && this.menus[activePageMenuID] && currentMenuID !== activePageMenuID)
+		{
+			this.activeMenu.css('display', 'none');
+			this.activeMenu = this.menus[activePageMenuID];
+		}
+		
+		var $menu = this.activeMenu;
+		
+		var menuBeforeOpen = new $.Event( "somenubeforeopen" );
+		$menu.trigger(menuBeforeOpen);	
+	
+		$.mobile.silentScroll(0);
+	
+		$menu.css('display', 'block');
+	
+		$container.removeClass(hideClass);
+	
+		this.isOpen = true;
+	
+		var mainPage = $.mobile.activePage;
+	
+		if (!mainPage) return;
+	
+		var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
+		var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
+		var pagePadding = 0;
+
+		if (this.options.enableAnimation && !fixedH.length && !fixedF.length)
+		{
+			mainPage.addClass('animate');
+		}
+	
+		mainPage.css({left: $container.width(), 'overflow-y':'hidden'}).addClass('ui-somenu-open');
+		if (fixedH.length)
+		{
+			fixedH.css({'position':'fixed', 'left': $container.width(), 'width': '100%'});
+			pagePadding += parseInt(mainPage.css('padding-top'));
+		}
+	
+		if (fixedF.length)
+		{
+			fixedF.css({'position':'fixed', 'left': $container.width(), 'width': '100%'});
+			pagePadding += parseInt(mainPage.css('padding-bottom'));
+		}
+	
+		$menu.css('padding-bottom', pagePadding + 'px');
+		
+		this.refresh();
+	
+		this._resizeHandler();
+	
+		var menuOnOpen = new $.Event( "somenuopen" );
+		$menu.trigger(menuOnOpen);
+		
+		$.mobile.activePage.one('vclick', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			//history.back();
+			self.close();
+			ClickBuster.preventGhostClick(e);
+		});
+	},
+	
+	close: function()
+	{
+		var hideClass = this.options.hideClass,
+			$container = this.container,
+			$menu = this.activeMenu;
+		
+		if (!this.isOpen) return;
+		
+		if (location.hash == '#menu') {
+			history.back();
+			return;
+		}
+		
+		var menuBeforeClose = new $.Event( "somenubeforeclose" );
+		$menu.trigger(menuBeforeClose);
+
+		this.isOpen = false;
+		
+		var mainPage = $.mobile.activePage;
+		
+		if (!mainPage) return;
+		
+		var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
+		var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
+		
+		if (this.options.enableAnimation && !fixedH.length && !fixedF.length)
+		{
+			mainPage.addClass('animate');
+			setTimeout(function() { $container.addClass(hideClass); mainPage.removeClass('ui-somenu-open'); }, 200);
+		}
+		else
+		{
+			$container.addClass(hideClass); mainPage.removeClass('ui-somenu-open');
+		}
+		
+		mainPage.css({left:0, 'overflow-y': 'auto'})
+		
+		if (fixedH.length)
+		{
+			fixedH.css('left', 0)[0].style.position = '';
+			fixedH.css('left', 0)[0].style.width = '';
+		}
+		
+		if (fixedF.length)
+		{
+			fixedF.css('left', 0)[0].style.position = '';
+			fixedF.css('left', 0)[0].style.width = '';
+		}
+		
+		$menu.css('padding-bottom', '0px');
+		
+		this._resizeHandler();
+		
+		var menuOnClose = new $.Event( "somenuclose" );
+		$menu.trigger(menuOnClose);
+	},
+	
+	toggle: function()
+	{
+		if (this.isOpen || location.hash == '#menu') {
+			this.close();
+			//setTimeout(function() { history.back(); }, 0);
+		}
+		else
+		{
+			location.hash = '#menu';
+		}
+	}
+};
 
 (function($, undefined) {
 	
@@ -442,7 +484,7 @@ SlideoutMenu.prototype.init = function()
 					$el = self.element;
 				$el.on('vclick', function(e) {
 					ClickBuster.preventGhostClick(e);
-					SlideoutMenu.activeMenu.toggle();
+					SlideoutMenu().toggle();
 				});
 			}
 		});
@@ -452,6 +494,7 @@ SlideoutMenu.prototype.init = function()
 			$(":jqmData(role='somenutoggler')", document).somenutoggler();
 		});
 		
+		// instantiate slideoutmenu. pass options here...
 		$(document).one('pageinit', function() { new SlideoutMenu(); });
 	});
 })(jQuery);
