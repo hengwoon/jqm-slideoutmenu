@@ -129,7 +129,7 @@ var SlideoutMenu = function(options)
 	}
 	
 	// bind events
-	this.container.delegate("a", "click", function (event) {
+	this.container.delegate(":jqmData(role='content') a", "click", function (event) {
 		var liBtn = $(event.target).closest('li.ui-btn');
 		if( !$(event.target).hasClass("ui-disabled") && (!liBtn.length || liBtn.not(".ui-disabled").jqmData("role") != 'collapsibler')) {
 			self.close();
@@ -220,7 +220,7 @@ var SlideoutMenu = function(options)
 };
 
 SlideoutMenu.prototype = {
-	_id: 0,
+	_id: 1,
 	isOpen: false,
 	options: {
 		hideClass: 'ui-somenu-hidden',
@@ -230,14 +230,14 @@ SlideoutMenu.prototype = {
 
 	toPageOnClose: null,
 	container: null,
-	menus: [],
+	menus: {},
 	activeMenu: null,
 	mainPage: null,
 	
 	
 	getMenuForPage: function(page)
 	{
-		var menuIDForPage = page.data('slideoutmenu.id');
+		var menuIDForPage = page.data('somenu.id');
 		
 		if (menuIDForPage && this.menus[menuIDForPage])
 			return this.menus[menuIDForPage];
@@ -247,17 +247,20 @@ SlideoutMenu.prototype = {
 	
 	createMenuForPage: function(menu, page)
 	{
-		var newMenuID = 'slideoutmenu_' + (++this._id),
-		newMenu = $('<div id="' + newMenuID + '" data-role="page"></div>').append(menu.children()).css('display', 'none');
-	
+		var newMenuID = menu.jqmData('somenu-id') || this._id,
+			newMenu = $('<div data-somenu-id="' + newMenuID + '" data-role="page"></div>').append(menu.children()).css('display', 'none');
+
+		this._id++;
+		
 		if (page)
 		{
-			page.data('slideoutmenu.id', newMenuID);
+			page.data('somenu.id', newMenuID);
 		}
 		
 		newMenu.appendTo(this.container);
 		newMenu.page().trigger('create');
 		this.menus[newMenuID] = newMenu;
+		
 		menu.remove();
 		
 		if (!this.activeMenu)
@@ -268,6 +271,35 @@ SlideoutMenu.prototype = {
 		var menuEvent = new $.Event( "somenucreate" );
 		
 		newMenu.trigger(menuEvent);
+		
+		if (page)
+		{
+			var self = this;
+			page.on('pageremove', function(e) {
+				if (self.menus[newMenuID])
+				{
+					var ev = $.Event('pageremove');
+					self.menus[newMenuID].trigger(ev);
+					console.log(self.menus[newMenuID]);
+					self.menus[newMenuID].remove();
+					delete self.menus[newMenuID];
+					
+					if (self.activeMenu && self.activeMenu.jqmData('somenu-id') == newMenuID)
+					{
+						for (i in self.menus)
+						{
+							if (typeof(self.menus[i]) == 'object')
+							{
+								self.activeMenu = self.menus[i];
+								break;
+							}
+						}
+					}
+				}
+			});
+		}
+		
+		return newMenu;
 	},
 	
 	refresh: function()
@@ -325,6 +357,42 @@ SlideoutMenu.prototype = {
 		mainPage.height(menuHeight);
 	},
 	
+	switchToMenu: function(id)
+	{
+		if (!this.menus[id]) return false;
+		
+		this.activeMenu.css('display', 'none');
+		this.activeMenu = this.menus[id];
+		
+		$.mobile.silentScroll(0);
+		
+		this.activeMenu.css('display', 'block');
+	
+		var mainPage = $.mobile.activePage;
+	
+		if (!mainPage) return;
+	
+		var fixedH = $(":jqmData(role='header'):jqmData(position='fixed')", mainPage);
+		var fixedF = $(":jqmData(role='footer'):jqmData(position='fixed')", mainPage);
+		var pagePadding = 0;
+		
+		if (fixedH.length)
+		{
+			pagePadding += parseInt(mainPage.css('padding-top'));
+		}
+	
+		if (fixedF.length)
+		{
+			pagePadding += parseInt(mainPage.css('padding-bottom'));
+		}
+	
+		this.activeMenu.css('padding-bottom', pagePadding + 'px');
+		
+		this.refresh();
+	
+		this._resizeHandler();
+	},
+	
 	open: function()
 	{
 		var hideClass = this.options.hideClass,
@@ -334,10 +402,10 @@ SlideoutMenu.prototype = {
 		if (this.isOpen) return;
 	
 		// is current menu ok for active page?
-		var activePageMenuID = $.mobile.activePage.data('slideoutmenu.id'),
-			currentMenuID = this.activeMenu.attr('id');
+		var activePageMenuID =  $.mobile.activePage.data('somenu.id'),
+			currentMenuID = this.activeMenu.jqmData('somenu-id');
 		
-		if (activePageMenuID && this.menus[activePageMenuID] && currentMenuID !== activePageMenuID)
+		if (activePageMenuID && this.menus[activePageMenuID] && currentMenuID != activePageMenuID)
 		{
 			this.activeMenu.css('display', 'none');
 			this.activeMenu = this.menus[activePageMenuID];

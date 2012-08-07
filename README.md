@@ -127,7 +127,6 @@ Additional plugins:
 ===================
 Collapsible lists - jquery.mobile.slideoutmeu.collapsiblelist.js
 ----------------------------------------------------------------
-
 To make a listview in the slideout menu collapsible, add data-collapsible="true" to the listview ul element. There needs to be a list divider that will act as the list toggler / header:
 ```
 <ul data-role="listview" data-collapsible="true">
@@ -154,3 +153,21 @@ To hide list items by default, add class 'ui-collapsed' to the list items that w
 	<li class="ui-collapsed">this is hidden and will be shown when the more link is clicked</li>
 </ul>```
 
+
+Nested lists - jquery.mobile.slideoutmenu.nestedlist.js
+-------------------------------------------------------
+Creating a nested list for the menu is similar to how nested lists are created in jQuery Mobile except that the nested ul and ol should be wrapped in a div element with data-role="somenu-nested-list". <br />
+
+Note: each nested list creates a new jqm page, and having too many or nested lists that are too deep will impact performance.
+
+```
+<ul data-role="listview">
+	<li>Animals
+		<div data-role="somenu-nested-list">
+			<ul>
+				<li>Pets</li>
+			</ul>
+		</div>
+	</li>
+</ul>
+```
