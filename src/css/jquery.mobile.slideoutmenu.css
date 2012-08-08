@@ -1,3 +1,11 @@
+#viewport
+{
+	position: relative;
+	overflow: hidden;
+	min-height: 100%;
+	width: 100%;
+}
+
 .ui-somenu
 {
 	position: absolute;
@@ -11,6 +19,11 @@
 .ui-somenu.ui-somenu-hidden
 {
 	display: none;
+}
+
+.ui-mobile [data-role=page], .ui-page
+{
+	position: relative;
 }
 
 .ui-somenu .ui-page
