@@ -460,6 +460,7 @@ SlideoutMenu.prototype = {
 		$menu.trigger(menuOnOpen);
 		
 		$.mobile.activePage.one('vclick', function(e) {
+			if (!self.isOpen) return;
 			e.preventDefault();
 			e.stopPropagation();
 			//history.back();
