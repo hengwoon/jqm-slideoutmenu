@@ -6,7 +6,7 @@ The menu contents can also be updated depending on the page the user is on.
 
 Requirements:
 -------------
-jQuery Mobile 1.1 <br />
+jQuery Mobile 1.1 (v0.1) / jQuery Mobile 1.2 (v0.2) <br />
 jQuery 1.7+
 
 Features:
