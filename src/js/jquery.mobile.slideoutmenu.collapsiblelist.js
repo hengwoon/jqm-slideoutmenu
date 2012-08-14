@@ -36,21 +36,7 @@
 (function($, undefined) {
 	var _refreshCollapsibleList = function(list)
 	{
-		var collapsedIcon = 'ui-icon-' + list.jqmData('icon-collapsed');
-		var expandedIcon = 'ui-icon-' + list.jqmData('icon-expanded');
-		var listHeader = list.find(":jqmData(role='list-divider')").addClass('ui-collapsibler ui-btn-icon-right');
-		var iconEl = listHeader.find('.ui-icon');
-		
-		if (list.jqmData('collapsed'))
-		{
-			listHeader.find('.ui-icon').addClass(collapsedIcon).removeClass(expandedIcon);
-			list.addClass('ui-collapsed');
-		}
-		else
-		{
-			list.removeClass('ui-collapsed');
-			listHeader.find('.ui-icon').removeClass(collapsedIcon).addClass(expandedIcon);
-		}
+		var listHeader = list.find(":jqmData(role='list-divider')");
 		
 		if (list.jqmData('show-selected'))
 		{
@@ -83,34 +69,53 @@
 			menu = $(event.target);
 		
 		menu.find("ul:jqmData(collapsible='true')").each(function() {
-			if ($(this).hasClass('ui-ul-collapsible')) return;
+			var list = $(this);
 			
-			$(this).addClass(".ui-ul-collapsible");
-			var listHeader = $(this).find(":jqmData(role='list-divider')").addClass('ui-collapsibler');
+			if (list.hasClass('ui-ul-collapsible')) return;
+			
+			list.addClass(".ui-ul-collapsible");
+			var listHeader = list.find(":jqmData(role='list-divider')");
 			listHeader.append('<span class="ui-selected-text"></span><span class="ui-icon"> </span>');
+			
+			var collapsedIcon = 'ui-icon-' + list.jqmData('icon-collapsed');
+			var expandedIcon = 'ui-icon-' + list.jqmData('icon-expanded');
+			
+			if (list.jqmData('collapsed'))
+			{
+				listHeader.find('.ui-icon').addClass(collapsedIcon).removeClass(expandedIcon);
+				list.addClass('ui-collapsed');
+			}
+			else
+			{
+				list.removeClass('ui-collapsed');
+				listHeader.find('.ui-icon').removeClass(collapsedIcon).addClass(expandedIcon);
+			}
 
-			listHeader.on('vclick', function(e){
+			listHeader.addClass('ui-collapsibler ui-btn-icon-right').on('vclick', function(e){
 				e.preventDefault();
 				e.stopPropagation();
 				
 				ClickBuster.preventGhostClick(e);
-				var list = $(this).closest(":jqmData(role='listview')");
-				var collapsed = list.jqmData('collapsed');
+				var collapsed = !(list.jqmData('collapsed'));
 				
-				list.jqmData('collapsed', !collapsed);
+				list.jqmData('collapsed', collapsed);
 				
-				_refreshCollapsibleList(list);
+				var iconEl = $(this).find('.ui-icon');
+				
+				if (collapsed)
+				{
+					$(this).find('.ui-icon').addClass(collapsedIcon).removeClass(expandedIcon);
+					list.addClass('ui-collapsed');
+				}
+				else
+				{
+					list.removeClass('ui-collapsed');
+					$(this).find('.ui-icon').removeClass(collapsedIcon).addClass(expandedIcon);
+				}
 				
 				somenu._resizeHandler();
 			});
 		});
-		
-		$("ul:jqmData(collapsible='true')", menu).each(function()
-		{		
-			_refreshCollapsibleList($(this));
-		});
-		
-		
 		
 		// collapsed menu items with 'more...' toggler
 		menu.find("li.ui-btn").not(".ui-li-divider").each(function() {
@@ -147,5 +152,12 @@
 			}
 		});
 		
+	});
+	
+	$(document).on('somenuopen', function(e) {
+		$("ul:jqmData(collapsible='true')", e.target).each(function()
+		{		
+			_refreshCollapsibleList($(this));
+		});
 	});
 }) (jQuery);

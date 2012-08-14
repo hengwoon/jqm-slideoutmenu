@@ -70,7 +70,7 @@ if (typeof(ClickBuster) == 'undefined')
 		preventGhostClick: function(e)
 		{
 			ClickBuster.coordinates.push(e.clientX, e.clientY);
-			window.setTimeout(ClickBuster.pop, 1000);
+			window.setTimeout(ClickBuster.pop, 500);
 			e.preventDefault();
 			e.stopPropagation();
 		},

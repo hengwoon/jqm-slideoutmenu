@@ -77,14 +77,11 @@
 				menu.on('pageremove', function() {
 					var ev = new $.Event('pageremove');
 					newPage.trigger(ev);
-					newMenu.remove();
-					delete newMenu;
+					newPage.remove();
+					delete newPage;
 				})
 				
-				li.on('vclick', function(e) {
-					ClickBuster.preventGhostClick(e);
-					e.preventDefault();
-					e.stopPropagation();
+				li.on('click', function(e) {
 					somenu.switchToMenu(id);
 				});
 			});
